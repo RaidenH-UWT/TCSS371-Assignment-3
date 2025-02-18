@@ -1,0 +1,173 @@
+; This is a program to multiply two numbers.
+; The program first stores a number into address x3100.
+; The program then stores a second number into x3101.
+; In a more complete program the two numbers would be read from the keyboard.
+; In a more complete program the result would be written to the monitor.
+
+; By: Raiden H, Emma Szebenyi
+
+; A Note:
+; I've gone a bit beyond the assignment specifications.
+; My program checks which of the two operands is smaller
+; and uses that one as the counter for my addition loop.
+; This results in greater efficiency, saving clock cycles,
+; because we're going through the loop the minimum number of
+; times. This does, however, mean that my program ended up
+; with 69 instructions (included the boilerplate). I could
+; have written a more compact program if I did not implement
+; this time-saver, but as there was no space requirements
+; I decided to have some fun with it and go for efficiency.
+;
+; Also, I used the registers specified by the assignment for
+; their described purpose, but due to the rest of my implementation
+; I also use every register (aside from R0 and R7 as mentioned
+; in class)
+; - Raiden
+
+;                    ____   _______
+;              ___ _/____\_/ _____ \
+;         ----/___/    _____/     \/
+;        /               \ ______
+; -^----/   <(o)>       --/ (__)_\
+;/       /              ____/ 
+;\--V----                _|
+; v---------------------|__\
+
+; R0: Empty (for input)
+; R1: Absolute value of R3
+; R2: Absolute value of R4
+; R3: Original first operand
+; R4: Original second operand
+; R5: Compares R1 and R2, Holds total
+; R6: Holds flag for changing sign of output, Holds sign of output
+; R7: Empty (for output)
+
+0011 000 000000000     ; Load address x3000 as the start location | x3000 + #0
+
+; clear R0 and R1
+0101 000 000 1 00000   ; R0 <- 0 | x3000 + #1
+0101 001 001 1 00000   ; R1 <- 0 | x3000 + #2
+
+; store values into R0 and R1
+0001 000 000 1 00101   ; R0 <- #5 | x3000 + #3
+0001 001 001 1 00011   ; R1 <- #3 | x3000 + #4
+
+; currently broken, returns a negative value when it should be positive
+
+; store values from R0 and R1 into memory
+0011 000 0 1111 1011; x3100 <- R0 | x3000 + #5
+0011 001 0 1111 1011; x3101 <- R1 | x3000 + #6
+
+; clear R0 and R1
+0101 000 000 1 00000   ; R0 <- 0 | x3000 + #7
+0101 001 001 1 00000   ; R1 <- 0 | x3000 + #8
+
+; The multiply program starts here.
+; Add code below to complete the assignment requirements.
+; Do NOT change any of the code above except to add a header comment with your name(s)
+
+0010 011 0111 10111 ; LOAD x3100 into R3 | x3000 + #9
+0010 100 0111 10111 ; LOAD x3101 into R4 | x3000 + #10
+
+; Take absolute value of R3 and R4 and put them in R1 and R2
+; absolute(R3)
+0001 001 001 0 00 011 ; ADD R3 to R1 | x3000 + #11
+0000 011 0000 00010 ; BRANCH + #2 if zp | x3000 + #12
+; default case
+1001 001 001 111111 ; NOT R1 to R1 | x3000 + #13
+0001 001 001 1 00001 ; ADD #1 to R1 | x3000 + #14
+
+; absolute(R4)
+0001 010 010 0 00 100; ADD R4 to R2 | x3000 + #15
+0000 011 0000 00010; BRANCH + #2 if zp | x3000 + #16
+; default case
+1001 010 010 111111; NOT R2 to R2 | x3000 + #17
+0001 010 010 1 00001; ADD #1 to R2 | x3000 + #18
+
+; Test if R3 or R4 are zero
+0101 011 011 1 11111 ; AND R3 * 11111 | x3000 + #19
+0000 010 0000 01000 ; BRANCH + #8 if z | x3000 + #20
+0101 100 100 1 11111 ; AND R4 * 11111 | x3000 + #21
+0000 010 0000 00110 ; BRANCH + #6 if z | x3000 + #22
+
+; Test if both R3 and R4 are negative
+0001 001 001 0 00 011 ; ADD R3 to R1 | x3000 + #23
+0000 101 0000 00001 ; BRANCH + #1 if np | x3000 + #24
+0001 110 110 1 11111 ; ADD - #1 to R6 | x3000 + #25
+
+0001 010 010 0 00 100 ; ADD R4 to R2 | x3000 + #26
+0000 101 0000 00001 ; BRANCH + #1 if np | x3000 + #27
+0001 110 110 1 11111 ; ADD - #1 to R6 | x3000 + #28
+
+; Clear R1 and R2
+0101 001 001 1 00000 ; AND R1 * #0 | x3000 + #29
+0101 010 010 1 00000 ; AND R2 * #0 | x3000 + #30
+
+; Take absolute value of R3 and R4 and put them in R1 and R2
+; absolute(R3)
+0001 001 001 0 00 011 ; ADD R3 to R1 | x3000 + #31
+0000 011 0000 00010 ; BRANCH + #2 if zp | x3000 + #32
+; default case
+1001 001 001 111111 ; NOT R1 to R1 | x3000 + #33
+0001 001 001 1 00001 ; ADD #1 to R1 | x3000 + #34
+
+; absolute(R4)
+0001 010 010 0 00 100; ADD R4 to R2 | x3000 + #35
+0000 011 0000 00010; BRANCH + #2 if zp | x3000 + #36
+; default case
+1001 010 010 111111; NOT R2 to R2 | x3000 + #37
+0001 010 010 1 00001; ADD #1 to R2 | x3000 + #38
+
+
+; Comparing the operands to see which is greater
+; I'll use this to decide which one will be my loop condition
+; Using the smaller value for less loop iterations and more efficiency
+0001 101 101 0 00 010 ; ADD R2 to R5 | x3000 + #39
+1001 101 101 111111 ; NOT R5 to R5 | x3000 + #40
+0001 101 101 1 00001 ; ADD #1 to R5 | x3000 + #41
+0001 101 101 0 00 001 ; ADD R1 to R5 | x3000 + #42
+
+; IF R1 > R2 P, IF R1 < R2 N, IF R1 == R2 Z
+0000 010 0000 01110 ; BRANCH + #14 if z | x3000 + #43
+0000 100 0000 00101 ; BRANCH + #5 if n | x3000 + #44
+
+
+; Loop adding R1 to R5 R2 iterations
+0101 101 101 1 00000 ; AND R5 * #0 | x3000 + #45
+0001 101 101 0 00 001 ; ADD R1 to R5 | x3000 + #46
+0001 010 010 1 11111 ; decrement R2 | x3000 + #47
+0000 001 1111 11101 ; BRANCH - #3 if nz | x3000 + #48
+0000 111 0000 00100 ; BRANCH + #4 if nzp | x3000 + #49
+
+; Loop add R2 to R5, R1 iterations
+0101 101 101 1 00000 ; AND R5 * #0 | x3000 + #50
+0001 101 101 0 00 010 ; ADD R2 to R5 | x3000 + #51
+0001 001 001 1 11111 ; decrement R1 | x3000 + #52
+0000 001 1111 11101 ; BRANCH - #3 if nz | x3000 + #53
+
+; 2's comp if 1 operand was negative
+0001 110 110 1 00001 ; ADD + #1 to R6 | x3000 + #54
+0000 101 0000 00010 ; BRANCH + #2 if np | x3000 + #55
+1001 101 101 111111 ; NOT R5 to R5 | x3000 + #56
+0001 101 101 1 00001 ; ADD + #1 to R5 | x3000 + #57
+
+; Clear R6
+0101 110 110 1 00000 ; AND R6 * #0 | x3000 + #58
+
+
+; Test to see if the result is n/z/p
+0101 001 001 1 00000 ; AND R1 * #0 | x3000 + #59
+0101 110 110 1 00000 ; AND R6 * #0 | x3000 + #60
+0001 001 001 0 00 101 ; ADD R5 to R1 | x3000 + #61
+0000 100 0000 00010 ; BRANCH + #2 if n | x3000 + #62
+0000 001 0000 00011 ; BRANCH + #3 if p | x3000 + #63
+0000 010 0000 00011 ; BRANCH + #3 if z | x3000 + #64
+
+0001 110 110 1 11111 ; ADD - #1 to R6
+0000 111 0000 00001 ; BRANCH + #1 if nzp | x3000 + #65
+
+0001 110 110 1 00001 ; ADD + #1 to R6 | x3000 + #66
+
+0011 101 0101 11110 ; STORE R5 to x3102 (+ #190) | x3000 + #67
+
+1111 0000 0010 0101    ; halt the program (TRAP with vector x25)
